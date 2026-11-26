@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>圣诞树 · 手势开箱</title>
+<link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header class="hud">
+    <p class="eyebrow">2026 · CHRISTMAS</p>
+    <h1>Merry Christmas</h1>
+  </header>
+
+  <aside class="wish">
+    <p class="wish-label">写给最重要的人</p>
+    <h2 class="wish-title">愿你<br />所求皆如愿</h2>
+    <div class="wish-rule"></div>
+    <p class="wish-text">
+      愿你三冬暖，愿你春不寒；<br />
+      愿你天黑有灯，下雨有伞。
+    </p>
+    <p class="wish-sign">— 圣诞快乐 —</p>
+  </aside>
+
+  <div class="controls">
+    <button id="btn-camera" class="btn">开启手势摄像头</button>
+    <button id="btn-toggle" class="btn">散开看看</button>
+    <button id="btn-audio" class="btn">音效律动</button>
+    <label class="btn btn-file">
+      换照片
+      <input id="file-input" type="file" accept="image/*" multiple hidden />
+    </label>
+    <button id="btn-export" class="btn" style="display:none">导出这份</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- MediaPipe 的输入源，页面里不可见 -->
+  <video id="input-video" playsinline muted></video>
+
+  <!-- 三连点星星后弹出的祝福编辑器 -->
+  <div class="wish-editor" id="wish-editor" hidden>
+    <div class="wish-editor-card">
+      <h3>写一句祝福</h3>
+      <label>
+        称呼<i>（照片左边那行小字）</i>
+        <input id="wish-label-input" type="text" spellcheck="false" />
+      </label>
+      <label>
+        标题<i>（回车可以写两行）</i>
+        <textarea id="wish-title-input" rows="2" spellcheck="false"></textarea>
+      </label>
+      <label>
+        正文
+        <textarea id="wish-text-input" rows="4" spellcheck="false"></textarea>
+      </label>
+      <p class="wish-editor-tip">保存后会存在本机浏览器里，下次打开还在。</p>
+      <div class="wish-editor-actions">
+        <button class="btn" id="wish-cancel">取消</button>
+        <button class="btn is-on" id="wish-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 启动失败时显示的提示（正常情况下隐藏） -->
+  <div class="boot-error" id="boot-error" hidden>
+    <h3>页面没能启动</h3>
+    <p id="boot-reason"></p>
+    <ol>
+      <li>不要直接双击 <code>index.html</code>，请运行文件夹里的 <b>start.bat</b>，然后打开 <code>http://localhost:8000</code></li>
+      <li>浏览器建议用最新版 Chrome / Edge（需要支持 ES Module）</li>
+      <li>确认 <code>js/vendor</code> 文件夹完整（<code>three.module.js</code>、<code>addons/</code>）</li>
+    </ol>
+  </div>
+
+  <script>
+    (function () {
+      var box = document.getElementById('boot-error');
+      var reason = document.getElementById('boot-reason');
+      var shown = false;
+
+      function fail(msg) {
+        if (shown) return;
+        shown = true;
+        reason.textContent = msg;
+        box.hidden = false;
+      }
+
+      window.__xmasFail = fail;
+
+      if (location.protocol === 'file:') {
+        fail('你是直接双击打开的 index.html（file://）。浏览器会禁止这种方式加载 ES Module，也会禁用摄像头和麦克风，所以树不显示、按钮也没反应。');
+      }
+
+      window.addEventListener('error', function (e) {
+        if (window.__xmas) return; // 已经启动成功，运行期的小错误不弹这个框
+        if (e && e.target && e.target.tagName === 'SCRIPT') {
+          fail('脚本加载失败：' + (e.target.src || '未知脚本'));
+          return;
+        }
+        if (e && e.message) fail('运行出错：' + e.message);
+      }, true);
+
+      window.addEventListener('unhandledrejection', function (e) {
+        if (window.__xmas) return;
+        var r = e && e.reason;
+        fail('运行出错：' + (r && r.message ? r.message : String(r)));
+      });
+
+      setTimeout(function () {
+        if (!window.__xmas) {
+          fail('5 秒内没有启动完成。常见原因：用 file:// 打开、浏览器太旧（不支持 ES Module），或 js/vendor 里的文件缺失。');
+        }
+      }, 5000);
+    })();
+  </script>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
