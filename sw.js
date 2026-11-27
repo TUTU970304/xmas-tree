@@ -9,7 +9,7 @@
  */
 
 // 改了缓存策略就改一下版本号，旧的缓存会在 activate 时被清掉
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'xmas-' + VERSION;
 
 self.addEventListener('install', () => {
@@ -38,18 +38,23 @@ self.addEventListener('fetch', (event) => {
   // build.txt 必须走网络（版本探测），不能缓存
   if (url.pathname.endsWith('/build.txt')) return;
 
-  // 1) 页面：网络优先，断网用缓存
+  // 1) 页面：网络优先，断网用缓存（按各自的 URL 分开存，避免多个页面互相覆盖）
   if (req.mode === 'navigate') {
     event.respondWith(
       (async () => {
         try {
           const res = await fetch(req);
           const cache = await caches.open(CACHE);
-          cache.put('./index.html', res.clone());
+          cache.put(req, res.clone());
+
+          // 目录首页额外存一份固定键，断网时可以直接回退
+          if (new URL(req.url).pathname.endsWith('/')) {
+            cache.put('./index.html', res.clone());
+          }
           return res;
         } catch (err) {
           const cache = await caches.open(CACHE);
-          const hit = await cache.match('./index.html');
+          const hit = (await cache.match(req)) || (await cache.match('./index.html'));
           return hit || Response.error();
         }
       })()
