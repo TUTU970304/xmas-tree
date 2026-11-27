@@ -57,8 +57,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2) 手势模型 / three.js：缓存优先，一次下载长期复用
-  if (url.pathname.includes('/js/vendor/')) {
+  // 2) 手势模型 / three.js / 音乐：缓存优先，一次下载长期复用
+  if (url.pathname.includes('/js/vendor/') || url.pathname.endsWith('/music.wav')) {
     event.respondWith(
       caches.match(req).then((hit) => {
         if (hit) return hit;
